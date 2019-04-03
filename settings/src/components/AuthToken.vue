@@ -20,7 +20,8 @@
   -->
 
 <template>
-	<tr :data-id="token.id">
+	<tr :data-id="token.id"
+		:class="{wiping}">
 		<td class="client">
 			<div :class="iconName.icon"></div>
 		</td>
@@ -33,6 +34,8 @@
 				   @blur="cancelRename"
 				   @keyup.esc="cancelRename">
 			<span v-else>{{iconName.name}}</span>
+			<span v-if="wiping"
+				  class="wiping-warning">({{ t('settings', 'Marked for remote wipe') }})</span>
 		</td>
 		<td>
 			<span class="last-activity" v-tooltip="lastActivity">{{lastActivityRelative}}</span>
@@ -149,6 +152,11 @@
 						action: () => this.$emit('delete', this.token),
 						text: t('settings', 'Revoke'),
 					});
+					actions.push({
+						icon: 'icon-delete',
+						action: this.wipe,
+						text: t('settings', 'Wipe device'),
+					});
 				}
 
 				return actions;
@@ -197,6 +205,9 @@
 					name,
 				};
 			},
+			wiping() {
+				return this.token.type === 2;
+			}
 		},
 		data () {
 			return {
@@ -224,11 +235,20 @@
 				this.renaming = false;
 				this.$emit('rename', this.token, this.newName);
 			},
+			wipe () {
+				this.actionOpen = false;
+
+				this.$emit('wipe', this.token);
+			}
 		}
 	}
 </script>
 
 <style lang="scss" scoped>
+	.wiping {
+		background-color: var(--color-background-darker);
+	}
+
 	td {
 		border-top: 1px solid var(--color-border);
 		max-width: 200px;
@@ -253,6 +273,9 @@
 				width: 100%;
 				margin: 0;
 			}
+		}
+		&.token-name .wiping-warning {
+			color: var(--color-text-lighter);
 		}
 
 		&.more {

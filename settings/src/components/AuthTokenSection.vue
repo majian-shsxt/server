@@ -26,7 +26,8 @@
 		<AuthTokenList :tokens="tokens"
 					   @toggleScope="toggleTokenScope"
 					   @rename="rename"
-					   @delete="deleteToken"/>
+					   @delete="deleteToken"
+					   @wipe="wipeToken" />
 		<AuthTokenSetupDialogue :add="addNewToken" />
 	</div>
 </template>
@@ -131,6 +132,23 @@
 
 						// Restore
 						this.tokens.push(token);
+					})
+			},
+			wipeToken(token) {
+				console.debug('wiping app token', token);
+
+				return Axios.post(this.baseUrl + '/wipe/' + token.id)
+					.then(resp => resp.data)
+					.then(tap(() => {
+						console.debug('app token marked for wipe')
+
+						// Update the type
+						// TODO: refactor the server-side code to return the updated token
+						token.type = 2;
+					}))
+					.catch(err => {
+						console.error.bind('could not wipe app token', err);
+						OC.Notification.showTemporary(t('core', 'Error while wiping the device with the token'));
 					})
 			}
 		}
