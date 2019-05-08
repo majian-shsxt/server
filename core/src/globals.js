@@ -19,8 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import appswebroots from "./OC/appswebroots";
+
 /**
- * 
+ *
  * @param {Function} func the library to deprecate
  * @param {String} funcName the name of the library
  */
@@ -32,6 +34,22 @@ const deprecate = (func, funcName) => {
 	}
 	Object.assign(newFunc, oldFunc)
 	return newFunc
+}
+
+const setDeprecatedProp = (global, val, msg) => {
+	if (window[global] !== undefined) {
+		delete window[global]
+	}
+	Object.defineProperty(window, global, {
+		get: () => {
+			if (msg) {
+				console.warn(`${global} is deprecated: ${msg}`)
+			} else {
+				console.warn(`${global} is deprecated`)
+			}
+			return val
+		}
+	})
 }
 
 import _ from 'underscore'
@@ -91,6 +109,12 @@ window['md5'] = md5
 window['moment'] = moment
 
 window['OC'] = OC
+setDeprecatedProp('oc_appswebroots', OC.appswebroots, 'use OC.appswebroots instead')
+setDeprecatedProp('oc_config', OC.config, 'use OC.config instead')
+setDeprecatedProp('oc_debug', OC.debug, 'use OC.debug instead')
+setDeprecatedProp('oc_isadmin', OC.isUserAdmin(), 'use OC.isUserAdmin() instead')
+setDeprecatedProp('oc_webroot', OC.webroot, 'use OC.getRootPath() instead')
+setDeprecatedProp('OCDialogs', OC.dialogs, 'use OC.dialogs instead')
 window['OCP'] = OCP
 window['OCA'] = OCA
 window['escapeHTML'] = deprecate(escapeHTML, 'escapeHTML')

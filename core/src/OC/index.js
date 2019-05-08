@@ -20,25 +20,73 @@
  */
 
 import Apps from './apps'
-import AppConfig from './appconfig'
+import {AppConfig, appConfig} from './appconfig'
+import appswebroots from './appswebroots'
 import Backbone from './backbone'
+import Config from './config'
+import {
+	coreApps,
+	menuSpeed,
+	PERMISSION_ALL,
+	PERMISSION_CREATE,
+	PERMISSION_DELETE,
+	PERMISSION_NONE,
+	PERMISSION_READ,
+	PERMISSION_SHARE,
+	PERMISSION_UPDATE,
+	TAG_FAVORITE,
+} from './constants'
 import ContactsMenu from './contactsmenu'
+import Dialogs from './dialogs'
 import EventSource from './eventsource'
+import {get, set} from './get_set'
+import {isUserAdmin} from './admin'
 import L10N from './l10n'
+import {
+	generateUrl,
+	getRootPath,
+	filePath,
+	linkTo,
+	linkToOCS,
+	linkToRemote,
+	linkToRemoteBase,
+} from './routing'
 import msg from './msg'
 import Notification from './notification'
 import PasswordConfirmation from './password-confirmation'
 import Plugins from './plugins'
 import search from './search'
 import Util from './util'
+import {debug} from './debug'
+import {redirect, reload} from './navigation'
+import webroot from './webroot'
 
 /** @namespace OC */
 export default {
+	/*
+	 * Constants
+	 */
+	coreApps,
+	menuSpeed,
+	PERMISSION_ALL,
+	PERMISSION_CREATE,
+	PERMISSION_DELETE,
+	PERMISSION_NONE,
+	PERMISSION_READ,
+	PERMISSION_SHARE,
+	PERMISSION_UPDATE,
+	TAG_FAVORITE,
+
 	Apps,
 	AppConfig,
+	appConfig,
+	appswebroots,
 	Backbone,
 	ContactsMenu,
+	config: Config,
+	dialogs: Dialogs,
 	EventSource,
+	isUserAdmin,
 	L10N,
 	msg,
 	Notification,
@@ -46,4 +94,26 @@ export default {
 	Plugins,
 	search,
 	Util,
+	debug,
+	generateUrl,
+	get: get(window),
+	set: set(window),
+	getRootPath,
+	filePath,
+	redirect,
+	reload,
+	linkTo,
+	linkToOCS,
+	linkToRemote,
+	linkToRemoteBase,
+	/**
+	 * Relative path to Nextcloud root.
+	 * For example: "/nextcloud"
+	 *
+	 * @type string
+	 *
+	 * @deprecated since 8.2, use OC.getRootPath() instead
+	 * @see OC#getRootPath
+	 */
+	webroot,
 }

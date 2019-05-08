@@ -1,23 +1,5 @@
-/* global oc_isadmin */
-
-var oc_debug;
-var oc_webroot;
-
 var oc_current_user = document.getElementsByTagName('head')[0].getAttribute('data-user');
 var oc_requesttoken = document.getElementsByTagName('head')[0].getAttribute('data-requesttoken');
-
-window.oc_config = window.oc_config || {};
-
-if (typeof oc_webroot === "undefined") {
-	oc_webroot = location.pathname;
-	var pos = oc_webroot.indexOf('/index.php/');
-	if (pos !== -1) {
-		oc_webroot = oc_webroot.substr(0, pos);
-	}
-	else {
-		oc_webroot = oc_webroot.substr(0, oc_webroot.lastIndexOf('/'));
-	}
-}
 
 /** @namespace OCP */
 var OCP = Object.assign({}, window.OCP);
@@ -26,26 +8,7 @@ var OCP = Object.assign({}, window.OCP);
  * @namespace OC
  */
 Object.assign(window.OC, {
-	PERMISSION_NONE:0,
-	PERMISSION_CREATE:4,
-	PERMISSION_READ:1,
-	PERMISSION_UPDATE:2,
-	PERMISSION_DELETE:8,
-	PERMISSION_SHARE:16,
-	PERMISSION_ALL:31,
-	TAG_FAVORITE: '_$!<Favorite>!$_',
 	/* jshint camelcase: false */
-	/**
-	 * Relative path to Nextcloud root.
-	 * For example: "/nextcloud"
-	 *
-	 * @type string
-	 *
-	 * @deprecated since 8.2, use OC.getRootPath() instead
-	 * @see OC#getRootPath
-	 */
-	webroot:oc_webroot,
-
 	/**
 	 * Capabilities
 	 *
@@ -53,7 +16,6 @@ Object.assign(window.OC, {
 	 */
 	_capabilities: window.oc_capabilities || null,
 
-	appswebroots:(typeof oc_appswebroots !== 'undefined') ? oc_appswebroots:false,
 	/**
 	 * Currently logged in user or null if none
 	 *
@@ -61,164 +23,15 @@ Object.assign(window.OC, {
 	 * @deprecated use {@link OC.getCurrentUser} instead
 	 */
 	currentUser:(typeof oc_current_user!=='undefined')?oc_current_user:false,
-	config: window.oc_config,
-	appConfig: window.oc_appconfig || {},
 	theme: window.oc_defaults || {},
-	coreApps:['', 'admin','log','core/search','settings','core','3rdparty'],
 	requestToken: oc_requesttoken,
-	menuSpeed: 50,
-
-	/**
-	 * Get an absolute url to a file in an app
-	 * @param {string} app the id of the app the file belongs to
-	 * @param {string} file the file path relative to the app folder
-	 * @return {string} Absolute URL to a file
-	 */
-	linkTo:function(app,file){
-		return OC.filePath(app,'',file);
-	},
-
-	/**
-	 * Creates a relative url for remote use
-	 * @param {string} service id
-	 * @return {string} the url
-	 */
-	linkToRemoteBase:function(service) {
-		return OC.getRootPath() + '/remote.php/' + service;
-	},
-
-	/**
-	 * @brief Creates an absolute url for remote use
-	 * @param {string} service id
-	 * @return {string} the url
-	 */
-	linkToRemote:function(service) {
-		return window.location.protocol + '//' + window.location.host + OC.linkToRemoteBase(service);
-	},
-
-	/**
-	 * Gets the base path for the given OCS API service.
-	 * @param {string} service name
-	 * @param {int} version OCS API version
-	 * @return {string} OCS API base path
-	 */
-	linkToOCS: function(service, version) {
-		version = (version !== 2) ? 1 : 2;
-		return window.location.protocol + '//' + window.location.host + OC.getRootPath() + '/ocs/v' + version + '.php/' + service + '/';
-	},
-
-	/**
-	 * Generates the absolute url for the given relative url, which can contain parameters.
-	 * Parameters will be URL encoded automatically.
-	 * @param {string} url
-	 * @param [params] params
-	 * @param [options] options
-	 * @param {bool} [options.escape=true] enable/disable auto escape of placeholders (by default enabled)
-	 * @return {string} Absolute URL for the given relative URL
-	 */
-	generateUrl: function(url, params, options) {
-		var defaultOptions = {
-				escape: true
-			},
-			allOptions = options || {};
-		_.defaults(allOptions, defaultOptions);
-
-		var _build = function (text, vars) {
-			vars = vars || [];
-			return text.replace(/{([^{}]*)}/g,
-				function (a, b) {
-					var r = (vars[b]);
-					if(allOptions.escape) {
-						return (typeof r === 'string' || typeof r === 'number') ? encodeURIComponent(r) : encodeURIComponent(a);
-					} else {
-						return (typeof r === 'string' || typeof r === 'number') ? r : a;
-					}
-				}
-			);
-		};
-		if (url.charAt(0) !== '/') {
-			url = '/' + url;
-
-		}
-
-		if(oc_config.modRewriteWorking == true) {
-			return OC.getRootPath() + _build(url, params);
-		}
-
-		return OC.getRootPath() + '/index.php' + _build(url, params);
-	},
-
-	/**
-	 * Get the absolute url for a file in an app
-	 * @param {string} app the id of the app
-	 * @param {string} type the type of the file to link to (e.g. css,img,ajax.template)
-	 * @param {string} file the filename
-	 * @return {string} Absolute URL for a file in an app
-	 */
-	filePath:function(app,type,file){
-		var isCore=OC.coreApps.indexOf(app)!==-1,
-			link=OC.getRootPath();
-		if(file.substring(file.length-3) === 'php' && !isCore){
-			link+='/index.php/apps/' + app;
-			if (file != 'index.php') {
-				link+='/';
-				if(type){
-					link+=encodeURI(type + '/');
-				}
-				link+= file;
-			}
-		}else if(file.substring(file.length-3) !== 'php' && !isCore){
-			link=OC.appswebroots[app];
-			if(type){
-				link+= '/'+type+'/';
-			}
-			if(link.substring(link.length-1) !== '/'){
-				link+='/';
-			}
-			link+=file;
-		}else{
-			if ((app == 'settings' || app == 'core' || app == 'search') && type == 'ajax') {
-				link+='/index.php/';
-			}
-			else {
-				link+='/';
-			}
-			if(!isCore){
-				link+='apps/';
-			}
-			if (app !== '') {
-				app+='/';
-				link+=app;
-			}
-			if(type){
-				link+=type+'/';
-			}
-			link+=file;
-		}
-		return link;
-	},
 
 	/**
 	 * Check if a user file is allowed to be handled.
 	 * @param {string} file to check
 	 */
 	fileIsBlacklisted: function(file) {
-		return !!(file.match(oc_config.blacklist_files_regex));
-	},
-
-	/**
-	 * Redirect to the target URL, can also be used for downloads.
-	 * @param {string} targetURL URL to redirect to
-	 */
-	redirect: function(targetURL) {
-		window.location = targetURL;
-	},
-
-	/**
-	 * Reloads the current page
-	 */
-	reload: function() {
-		window.location.reload();
+		return !!(file.match(OC.config.blacklist_files_regex));
 	},
 
 	/**
@@ -267,20 +80,6 @@ Object.assign(window.OC, {
 	getPort: function() {
 		return window.location.port;
 	},
-
-	/**
-	 * Returns the web root path where this Nextcloud instance
-	 * is accessible, with a leading slash.
-	 * For example "/nextcloud".
-	 *
-	 * @return {string} web root path
-	 *
-	 * @since 8.2
-	 */
-	getRootPath: function() {
-		return OC.webroot;
-	},
-
 
 	/**
 	 * Returns the capabilities
@@ -492,12 +291,6 @@ Object.assign(window.OC, {
 		return path;
 	},
 
-	/**
-	 * Dialog helper for jquery dialogs.
-	 *
-	 * @namespace OC.dialogs
-	 */
-	dialogs:OCdialogs,
 	/**
 	 * Parses a URL query string into a JS map
 	 * @param {string} queryString query string in the format param1=1234&param2=abcde&param3=xyz
@@ -765,16 +558,6 @@ Object.assign(window.OC, {
 	},
 
 	/**
-	 * Returns whether the current user is an administrator
-	 *
-	 * @return {bool} true if the user is an admin, false otherwise
-	 * @since 9.0.0
-	 */
-	isUserAdmin: function() {
-		return oc_isadmin;
-	},
-
-	/**
 	 * Warn users that the connection to the server was lost temporarily
 	 *
 	 * This function is throttled to prevent stacked notfications.
@@ -913,9 +696,13 @@ function initCore() {
 	}
 
 	// css variables fallback for IE
-	if (msie > 0 || trident > 0) {
+	if (msie > 0 || trident > 0 || edge > 0) {
+		console.info('Legacy browser detected, applying css vars polyfill')
 		cssVars({
-			watch: true
+			watch: true,
+			//  set edge < 16 as incompatible
+			onlyLegacy: !(/Edge\/([0-9]{2})\./i.test(navigator.userAgent)
+				&& parseInt(/Edge\/([0-9]{2})\./i.exec(navigator.userAgent)[1]) < 16)
 		});
 	}
 
@@ -956,8 +743,8 @@ function initCore() {
 	function initSessionHeartBeat() {
 		// interval in seconds
 		var interval = NaN;
-		if (oc_config.session_lifetime) {
-			interval = Math.floor(oc_config.session_lifetime / 2);
+		if (OC.config.session_lifetime) {
+			interval = Math.floor(OC.config.session_lifetime / 2);
 		}
 		interval = isNaN(interval)? 900: interval;
 
@@ -978,8 +765,8 @@ function initCore() {
 	}
 
 	// session heartbeat (defaults to enabled)
-	if (typeof(oc_config.session_keepalive) === 'undefined' ||
-		!!oc_config.session_keepalive) {
+	if (typeof(OC.config.session_keepalive) === 'undefined' ||
+		!!OC.config.session_keepalive) {
 
 		initSessionHeartBeat();
 	}
@@ -1319,41 +1106,4 @@ if (window.history.pushState) {
 else {
 	$(window).on('hashchange', _.bind(OC.Util.History._onPopState, OC.Util.History));
 }
-
-/**
- * Get a variable by name
- * @param {string} name
- * @return {*}
  */
-OC.get=function(name) {
-	var namespaces = name.split(".");
-	var tail = namespaces.pop();
-	var context=window;
-
-	for(var i = 0; i < namespaces.length; i++) {
-		context = context[namespaces[i]];
-		if(!context){
-			return false;
-		}
-	}
-	return context[tail];
-};
-
-/**
- * Set a variable by name
- * @param {string} name
- * @param {*} value
- */
-OC.set=function(name, value) {
-	var namespaces = name.split(".");
-	var tail = namespaces.pop();
-	var context=window;
-
-	for(var i = 0; i < namespaces.length; i++) {
-		if(!context[namespaces[i]]){
-			context[namespaces[i]]={};
-		}
-		context = context[namespaces[i]];
-	}
-	context[tail]=value;
-};
