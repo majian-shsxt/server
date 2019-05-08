@@ -116,7 +116,7 @@ class TwoFactorChallengeController extends Controller {
 			'providerMissing' => $providerSet->isProviderMissing(),
 			'redirect_url' => $redirect_url,
 			'logout_url' => $this->getLogoutUrl(),
-			'setupProviers' => $setupProviders,
+			'setupProviders' => $setupProviders,
 		];
 		return new StandaloneTemplateResponse($this->appName, 'twofactorselectchallenge', $data, 'guest');
 	}
