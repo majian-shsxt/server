@@ -26,6 +26,18 @@ namespace OCP\Authentication\TwoFactorAuth;
 
 use OCP\IUser;
 
+/**
+ * @since 17.0.0
+ */
 interface IActivatableAtLogin {
+
+	/**
+	 * @param IUser $user
+	 *
+	 * @return ILoginSetupProvider
+	 *
+	 * @since 17.0.0
+	 */
 	public function getLoginSetup(IUser $user): ILoginSetupProvider;
+
 }
