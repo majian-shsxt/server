@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import {addScript, addStyle} from './legacy-loader'
 import Apps from './apps'
 import {AppConfig, appConfig} from './appconfig'
 import appswebroots from './appswebroots'
@@ -37,9 +38,16 @@ import {
 	TAG_FAVORITE,
 } from './constants'
 import ContactsMenu from './contactsmenu'
+import {currentUser, getCurrentUser} from './currentuser'
 import Dialogs from './dialogs'
 import EventSource from './eventsource'
 import {get, set} from './get_set'
+import {
+	hideMenus,
+	registerMenu,
+	showMenu,
+	unregisterMenu,
+} from './menu'
 import {isUserAdmin} from './admin'
 import L10N from './l10n'
 import {
@@ -77,6 +85,8 @@ export default {
 	PERMISSION_UPDATE,
 	TAG_FAVORITE,
 
+	addScript,
+	addStyle,
 	Apps,
 	AppConfig,
 	appConfig,
@@ -84,10 +94,33 @@ export default {
 	Backbone,
 	ContactsMenu,
 	config: Config,
+	/**
+	 * Currently logged in user or null if none
+	 *
+	 * @type String
+	 * @deprecated use {@link OC.getCurrentUser} instead
+	 */
+	currentUser,
 	dialogs: Dialogs,
 	EventSource,
+	/**
+	 * Returns the currently logged in user or null if there is no logged in
+	 * user (public page mode)
+	 *
+	 * @since 9.0.0
+	 */
+	getCurrentUser,
 	isUserAdmin,
 	L10N,
+
+	/*
+	 * Legacy menu helpers
+	 */
+	hideMenus,
+	registerMenu,
+	showMenu,
+	unregisterMenu,
+
 	msg,
 	Notification,
 	PasswordConfirmation,

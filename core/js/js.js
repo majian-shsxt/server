@@ -1,4 +1,3 @@
-var oc_current_user = document.getElementsByTagName('head')[0].getAttribute('data-user');
 var oc_requesttoken = document.getElementsByTagName('head')[0].getAttribute('data-requesttoken');
 
 /** @namespace OCP */
@@ -16,13 +15,6 @@ Object.assign(window.OC, {
 	 */
 	_capabilities: window.oc_capabilities || null,
 
-	/**
-	 * Currently logged in user or null if none
-	 *
-	 * @type String
-	 * @deprecated use {@link OC.getCurrentUser} instead
-	 */
-	currentUser:(typeof oc_current_user!=='undefined')?oc_current_user:false,
 	theme: window.oc_defaults || {},
 	requestToken: oc_requesttoken,
 
@@ -93,23 +85,6 @@ Object.assign(window.OC, {
 	},
 
 	/**
-	 * Returns the currently logged in user or null if there is no logged in
-	 * user (public page mode)
-	 *
-	 * @return {OC.CurrentUser} user spec
-	 * @since 9.0.0
-	 */
-	getCurrentUser: function() {
-		if (_.isUndefined(this._currentUserDisplayName)) {
-			this._currentUserDisplayName = document.getElementsByTagName('head')[0].getAttribute('data-user-displayname');
-		}
-		return {
-			uid: this.currentUser,
-			displayName: this._currentUserDisplayName
-		};
-	},
-
-	/**
 	 * get the absolute path to an image file
 	 * if no extension is given for the image, it will automatically decide
 	 * between .png and .svg based on what the browser supports
@@ -140,48 +115,6 @@ Object.assign(window.OC, {
 			result.push(encodeURIComponent(parts[i]));
 		}
 		return result.join('/');
-	},
-
-	/**
-	 * Load a script for the server and load it. If the script is already loaded,
-	 * the event handler will be called directly
-	 * @param {string} app the app id to which the script belongs
-	 * @param {string} script the filename of the script
-	 * @param ready event handler to be called when the script is loaded
-	 * @deprecated 16.0.0 Use OCP.Loader.loadScript
-	 */
-	addScript:function(app,script,ready){
-		var deferred, path=OC.filePath(app,'js',script+'.js');
-		if(!OC.addScript.loaded[path]) {
-			deferred = $.Deferred();
-			$.getScript(path, function() {
-				deferred.resolve();
-			});
-			OC.addScript.loaded[path] = deferred;
-		} else {
-			if (ready) {
-				ready();
-			}
-		}
-		return OC.addScript.loaded[path];
-	},
-	/**
-	 * Loads a CSS file
-	 * @param {string} app the app id to which the css style belongs
-	 * @param {string} style the filename of the css file
-	 * @deprecated 16.0.0 Use OCP.Loader.loadStylesheet
-	 */
-	addStyle:function(app,style){
-		var path=OC.filePath(app,'css',style+'.css');
-		if(OC.addStyle.loaded.indexOf(path)===-1){
-			OC.addStyle.loaded.push(path);
-			if (document.createStyleSheet) {
-				document.createStyleSheet(path);
-			} else {
-				style=$('<link rel="stylesheet" type="text/css" href="'+path+'"/>');
-				$('head').append(style);
-			}
-		}
 	},
 
 	/**
@@ -420,116 +353,6 @@ Object.assign(window.OC, {
 	},
 
 	/**
-	 * For menu toggling
-	 * @todo Write documentation
-	 *
-	 * @param {jQuery} $toggle
-	 * @param {jQuery} $menuEl
-	 * @param {function|undefined} toggle callback invoked everytime the menu is opened
-	 * @param {boolean} headerMenu is this a top right header menu?
-	 * @returns {undefined}
-	 */
-	registerMenu: function($toggle, $menuEl, toggle, headerMenu) {
-		var self = this;
-		$menuEl.addClass('menu');
-
-		// On link, the enter key trigger a click event
-		// Only use the click to avoid two fired events
-		$toggle.on($toggle.prop('tagName') === 'A'
-			? 'click.menu'
-			: 'click.menu keyup.menu', function(event) {
-			// prevent the link event (append anchor to URL)
-			event.preventDefault();
-
-			// allow enter key as a trigger
-			if (event.key && event.key !== "Enter") {
-				return;
-			}
-
-			if ($menuEl.is(OC._currentMenu)) {
-				self.hideMenus();
-				return;
-			}
-			// another menu was open?
-			else if (OC._currentMenu) {
-				// close it
-				self.hideMenus();
-			}
-
-			if (headerMenu === true) {
-				$menuEl.parent().addClass('openedMenu');
-			}
-
-			// Set menu to expanded
-			$toggle.attr('aria-expanded', true);
-
-			$menuEl.slideToggle(OC.menuSpeed, toggle);
-			OC._currentMenu = $menuEl;
-			OC._currentMenuToggle = $toggle;
-		});
-	},
-
-	/**
-	 *  @todo Write documentation
-	 */
-	unregisterMenu: function($toggle, $menuEl) {
-		// close menu if opened
-		if ($menuEl.is(OC._currentMenu)) {
-			this.hideMenus();
-		}
-		$toggle.off('click.menu').removeClass('menutoggle');
-		$menuEl.removeClass('menu');
-	},
-
-	/**
-	 * Hides any open menus
-	 *
-	 * @param {Function} complete callback when the hiding animation is done
-	 */
-	hideMenus: function(complete) {
-		if (OC._currentMenu) {
-			var lastMenu = OC._currentMenu;
-			OC._currentMenu.trigger(new $.Event('beforeHide'));
-			OC._currentMenu.slideUp(OC.menuSpeed, function() {
-				lastMenu.trigger(new $.Event('afterHide'));
-				if (complete) {
-					complete.apply(this, arguments);
-				}
-			});
-		}
-
-		// Set menu to closed
-		$('.menutoggle').attr('aria-expanded', false);
-
-		$('.openedMenu').removeClass('openedMenu');
-		OC._currentMenu = null;
-		OC._currentMenuToggle = null;
-	},
-
-	/**
-	 * Shows a given element as menu
-	 *
-	 * @param {Object} [$toggle=null] menu toggle
-	 * @param {Object} $menuEl menu element
-	 * @param {Function} complete callback when the showing animation is done
-	 */
-	showMenu: function($toggle, $menuEl, complete) {
-		if ($menuEl.is(OC._currentMenu)) {
-			return;
-		}
-		this.hideMenus();
-		OC._currentMenu = $menuEl;
-		OC._currentMenuToggle = $toggle;
-		$menuEl.trigger(new $.Event('beforeShow'));
-		$menuEl.show();
-		$menuEl.trigger(new $.Event('afterShow'));
-		// no animation
-		if (_.isFunction(complete)) {
-			complete();
-		}
-	},
-
-	/**
 	 * Returns the user's locale as a BCP 47 compliant language tag
 	 *
 	 * @return {String} locale string
@@ -645,9 +468,6 @@ Object.assign(window.OC, {
 
 	}
 });
-
-OC.addStyle.loaded=[];
-OC.addScript.loaded=[];
 
 /**
  * Initializes core
