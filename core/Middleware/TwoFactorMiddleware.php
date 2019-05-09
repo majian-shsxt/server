@@ -88,9 +88,9 @@ class TwoFactorMiddleware extends Middleware {
 			return;
 		}
 
-		if ($controller instanceof ALoginSetupController) {
-			//TODO limit this scope!
-			//TODO only allow when doing 2fa stuff
+		if ($controller instanceof ALoginSetupController
+			&& $this->userSession->getUser() !== null
+			&& $this->twoFactorManager->needsSecondFactor($this->userSession->getUser())) {
 			return;
 		}
 
