@@ -116,7 +116,7 @@ class TwoFactorChallengeController extends Controller {
 			'providerMissing' => $providerSet->isProviderMissing(),
 			'redirect_url' => $redirect_url,
 			'logout_url' => $this->getLogoutUrl(),
-			'setupProviders' => $setupProviders,
+			'hasSetupProviders' => !empty($setupProviders),
 		];
 		return new StandaloneTemplateResponse($this->appName, 'twofactorselectchallenge', $data, 'guest');
 	}
@@ -241,11 +241,11 @@ class TwoFactorChallengeController extends Controller {
 		foreach ($providers as $p) {
 			if ($p->getId() === $providerId) {
 				$provider = $p;
+				break;
 			}
 		}
 
-
-		if ($provider === null || !($provider instanceof IActivatableAtLogin)) {
+		if ($provider === null) {
 			return new RedirectResponse($this->urlGenerator->linkToRoute('core.TwoFactorChallenge.selectChallenge'));
 		}
 

@@ -137,7 +137,7 @@ class Manager {
 
 	/**
 	 * @param IUser $user
-	 * @return IProvider[]
+	 * @return IActivatableAtLogin[]
 	 * @throws Exception
 	 */
 	public function getLoginSetupProviders(IUser $user): array {

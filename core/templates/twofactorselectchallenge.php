@@ -15,7 +15,7 @@ $noProviders = empty($_['providers']);
 	<img class="two-factor-icon" src="<?php p(image_path('core', 'actions/password-white.svg')) ?>" alt="" />
 	<p>
 		<?php if (is_null($_['backupProvider'])): ?>
-			<?php if (empty($_['setupProviders'])) { ?>
+			<?php if (!$_['hasSetupProviders']) { ?>
 				<strong><?php p($l->t('Two-factor authentication is enforced but has not been configured on your account. Contact your admin for assistance.')) ?></strong>
 			<?php } else { ?>
 				<strong><?php p($l->t('Two-factor authentication is enforced but has not been configured on your account. Please continue to setup two-factor authentication.')) ?></strong>
@@ -24,7 +24,7 @@ $noProviders = empty($_['providers']);
 						'redirect_url' => $_['redirect_url'],
 					]
 				)) ?>">
-					<?php p($l->t('Setup two-factor')) ?>
+					<?php p($l->t('Set up two-factor authentication')) ?>
 				</a>
 			<?php } ?>
 		<?php else: ?>
