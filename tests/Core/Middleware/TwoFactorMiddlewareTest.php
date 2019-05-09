@@ -118,11 +118,18 @@ class TwoFactorMiddlewareTest extends TestCase {
 	}
 
 	public function testBeforeSetupController() {
+		$user = $this->createMock(IUser::class);
 		$controller = $this->createMock(ALoginSetupController::class);
 		$this->reflector->expects($this->once())
 			->method('hasAnnotation')
 			->with('PublicPage')
 			->willReturn(false);
+		$this->userSession->expects($this->any())
+			->method('getUser')
+			->willReturn($user);
+		$this->twoFactorManager->expects($this->once())
+			->method('needsSecondFactor')
+			->willReturn(true);
 		$this->userSession->expects($this->never())
 			->method('isLoggedIn');
 
