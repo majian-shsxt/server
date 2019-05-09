@@ -427,4 +427,20 @@ class TwoFactorChallengeControllerTest extends TestCase {
 		$this->assertEquals($expected, $response);
 	}
 
+	public function testConfirmProviderSetup() {
+		$this->urlGenerator->expects($this->once())
+			->method('linkToRoute')
+			->with(
+				'core.TwoFactorChallenge.showChallenge',
+				[
+					'challengeProviderId' => 'totp',
+				])
+			->willReturn('2fa/select/page');
+		$expected = new RedirectResponse('2fa/select/page');
+
+		$response = $this->controller->confirmProviderSetup('totp');
+
+		$this->assertEquals($expected, $response);
+	}
+
 }
