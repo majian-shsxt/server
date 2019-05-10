@@ -349,6 +349,7 @@ class TwoFactorChallengeControllerTest extends TestCase {
 				'providers' => [
 					$provider,
 				],
+				'logout_url' => 'logoutAttribute',
 			],
 			'guest'
 		);

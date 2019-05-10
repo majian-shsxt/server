@@ -223,6 +223,7 @@ class TwoFactorChallengeController extends Controller {
 
 		$data = [
 			'providers' => $setupProviders,
+			'logout_url' => $this->getLogoutUrl(),
 		];
 
 		$response = new StandaloneTemplateResponse($this->appName, 'twofactorsetupselection', $data, 'guest');
