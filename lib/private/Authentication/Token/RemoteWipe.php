@@ -29,8 +29,9 @@ use BadMethodCallException;
 use OC\Authentication\Exceptions\InvalidTokenException;
 use OC\Authentication\Exceptions\WipeTokenException;
 use OCP\Activity\IManager as IActivityManager;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\ILogger;
-use OCP\IUser;
+use OCP\Notification\IManager as INotificationManager;
 
 class RemoteWipe {
 
@@ -40,14 +41,24 @@ class RemoteWipe {
 	/** @var IActivityManager */
 	private $activityManager;
 
+	/** @var INotificationManager */
+	private $notificationManager;
+
+	/** @var ITimeFactory */
+	private $timeFactory;
+
 	/** @var ILogger */
 	private $logger;
 
 	public function __construct(IProvider $tokenProvider,
 								IActivityManager $activityManager,
+								INotificationManager $notificationManager,
+								ITimeFactory $timeFactory,
 								ILogger $logger) {
 		$this->tokenProvider = $tokenProvider;
 		$this->activityManager = $activityManager;
+		$this->notificationManager = $notificationManager;
+		$this->timeFactory = $timeFactory;
 		$this->logger = $logger;
 	}
 
@@ -66,15 +77,16 @@ class RemoteWipe {
 			// is an ordinary token
 			return false;
 		} catch (WipeTokenException $e) {
-			$dbToken = $e->getToken();
-
-			$this->logger->info("user " . $dbToken->getUID() . " started a remote wipe");
-
-			//TODO: notification+activity that device retrieved the wipe
-			$this->publishActivity('remote_wipe_start', $e->getToken());
-
-			return true;
+			// Expected -> continue below
 		}
+
+		$dbToken = $e->getToken();
+
+		$this->logger->info("user " . $dbToken->getUID() . " started a remote wipe");
+		$this->sendNotification('remote_wipe_start', $e->getToken());
+		$this->publishActivity('remote_wipe_start', $e->getToken());
+
+		return true;
 	}
 
 	/**
@@ -91,15 +103,18 @@ class RemoteWipe {
 			// is an ordinary token
 			return false;
 		} catch (WipeTokenException $e) {
-			$dbToken = $e->getToken();
-
-			$this->tokenProvider->invalidateToken($token);
-
-			$this->logger->info("user " . $dbToken->getUID() . " finished a remote wipe");
-
-			//TODO: notification that device has ben wiped
-			$this->publishActivity('remote_wipe_finish', $e->getToken());
+			// Expected -> continue below
 		}
+
+		$dbToken = $e->getToken();
+
+		$this->tokenProvider->invalidateToken($token);
+
+		$this->logger->info("user " . $dbToken->getUID() . " finished a remote wipe");
+		$this->sendNotification('remote_wipe_finish', $e->getToken());
+		$this->publishActivity('remote_wipe_finish', $e->getToken());
+
+		return true;
 	}
 
 	private function publishActivity(string $event, IToken $token): void {
@@ -117,6 +132,17 @@ class RemoteWipe {
 			$this->logger->warning('could not publish activity', ['app' => 'core']);
 			$this->logger->logException($e, ['app' => 'core']);
 		}
+	}
+
+	private function sendNotification(string $event, IToken $token): void {
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp('core')
+			->setUser($token->getUID())
+			->setDateTime($this->timeFactory->getDateTime())
+			->setSubject($event, [
+				'name' => $token->getName(),
+			]);
+		$this->notificationManager->notify($notification);
 	}
 
 }
