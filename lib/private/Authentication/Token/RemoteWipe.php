@@ -25,16 +25,30 @@ declare(strict_types=1);
 
 namespace OC\Authentication\Token;
 
+use BadMethodCallException;
 use OC\Authentication\Exceptions\InvalidTokenException;
 use OC\Authentication\Exceptions\WipeTokenException;
+use OCP\Activity\IManager as IActivityManager;
+use OCP\ILogger;
+use OCP\IUser;
 
 class RemoteWipe {
 
 	/** @var IProvider */
 	private $tokenProvider;
 
-	public function __construct(IProvider $tokenProvider) {
+	/** @var IActivityManager */
+	private $activityManager;
+
+	/** @var ILogger */
+	private $logger;
+
+	public function __construct(IProvider $tokenProvider,
+								IActivityManager $activityManager,
+								ILogger $logger) {
 		$this->tokenProvider = $tokenProvider;
+		$this->activityManager = $activityManager;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -52,7 +66,13 @@ class RemoteWipe {
 			// is an ordinary token
 			return false;
 		} catch (WipeTokenException $e) {
+			$dbToken = $e->getToken();
+
+			$this->logger->info("user " . $dbToken->getUID() . " started a remote wipe");
+
 			//TODO: notification+activity that device retrieved the wipe
+			$this->publishActivity('remote_wipe_start', $e->getToken());
+
 			return true;
 		}
 	}
@@ -60,15 +80,42 @@ class RemoteWipe {
 	/**
 	 * @param string $token
 	 *
-	 * @return bool
+	 * @return bool whether wiping could be finished
 	 * @throws InvalidTokenException
 	 */
 	public function finish(string $token): bool {
 		try {
 			$this->tokenProvider->getToken($token);
+
+			// We expect a WipedTokenException here. If we reach this point this
+			// is an ordinary token
+			return false;
 		} catch (WipeTokenException $e) {
-			//TODO: notification that device has ben wiped
+			$dbToken = $e->getToken();
+
 			$this->tokenProvider->invalidateToken($token);
+
+			$this->logger->info("user " . $dbToken->getUID() . " finished a remote wipe");
+
+			//TODO: notification that device has ben wiped
+			$this->publishActivity('remote_wipe_finish', $e->getToken());
+		}
+	}
+
+	private function publishActivity(string $event, IToken $token): void {
+		$activity = $this->activityManager->generateEvent();
+		$activity->setApp('core')
+			->setType('security')
+			->setAuthor($token->getUID())
+			->setAffectedUser($token->getUID())
+			->setSubject($event, [
+				'name' => $token->getName(),
+			]);
+		try {
+			$this->activityManager->publish($activity);
+		} catch (BadMethodCallException $e) {
+			$this->logger->warning('could not publish activity', ['app' => 'core']);
+			$this->logger->logException($e, ['app' => 'core']);
 		}
 	}
 
