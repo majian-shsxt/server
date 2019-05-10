@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 /**
  * @copyright Copyright (c) 2019, Roeland Jago Douma <roeland@famdouma.nl>
  *
@@ -21,11 +23,13 @@ declare(strict_types=1);
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 namespace OC\Core\Controller;
 
 use OC\Authentication\Exceptions\InvalidTokenException;
 use OC\Authentication\Exceptions\WipeTokenException;
 use OC\Authentication\Token\IProvider;
+use OC\Authentication\Token\RemoteWipe;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -33,15 +37,15 @@ use OCP\IRequest;
 
 class WipeController extends Controller {
 
-	/** @var IProvider */
-	private $tokenProvider;
+	/** @var RemoteWipe */
+	private $remoteWipe;
 
 	public function __construct(string $appName,
 								IRequest $request,
-								IProvider $tokenProvider) {
+								RemoteWipe $remoteWipe) {
 		parent::__construct($appName, $request);
 
-		$this->tokenProvider = $tokenProvider;
+		$this->remoteWipe = $remoteWipe;
 	}
 
 	/**
@@ -52,23 +56,22 @@ class WipeController extends Controller {
 	 * @PublicPage
 	 *
 	 * @param string $token
+	 *
 	 * @return JSONResponse
 	 */
 	public function checkWipe(string $token): JSONResponse {
 		try {
-			$this->tokenProvider->getToken($token);
+			if ($this->remoteWipe->start($token)) {
+				return new JSONResponse([
+					'wipe' => true
+				]);
+			}
+
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
-		} catch (WipeTokenException $e) {
 		} catch (InvalidTokenException $e) {
-			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 			//TODO throttle
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		}
-
-		return new JSONResponse([
-			'wipe' => true
-		]);
-
-		//TODO: notification+activity that device retrieved the wipe
 	}
 
 
@@ -80,22 +83,20 @@ class WipeController extends Controller {
 	 * @PublicPage
 	 *
 	 * @param string $token
+	 *
 	 * @return JSONResponse
 	 */
 	public function wipeDone(string $token): JSONResponse {
-		//TODO: notification that device has ben wiped
-
 		try {
-			$this->tokenProvider->getToken($token);
+			if ($this->remoteWipe->finish($token)) {
+				return new JSONResponse([]);
+			}
+
 			return new JSONResponse([], Http::STATUS_NOT_FOUND);
-		} catch (WipeTokenException $e) {
 		} catch (InvalidTokenException $e) {
-			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 			//TODO throttle
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
 		}
-
-		$this->tokenProvider->invalidateToken($token);
-
-		return new JSONResponse([]);
 	}
+
 }
