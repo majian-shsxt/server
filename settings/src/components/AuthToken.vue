@@ -145,7 +145,7 @@
 						text: t('settings', 'Rename'),
 					});
 				}
-				if (this.token.canDelete) {
+				if (this.token.canDelete && this.token.type !== 2) {
 					// TODO: add text/longtext with some description
 					actions.push({
 						icon: 'icon-delete',
@@ -156,6 +156,13 @@
 						icon: 'icon-delete',
 						action: this.wipe,
 						text: t('settings', 'Wipe device'),
+					});
+				} else if (this.token.canDelete && this.token.type === 2) {
+					actions.push({
+						icon: 'icon-delete',
+						action: () => this.$emit('delete', this.token),
+						text: t('settings', 'Revoke'),
+						longtext: t('settings', 'Revoking this token might prevent the wiping of your device if it hasn\'t started the wipe yet.'),
 					});
 				}
 
