@@ -34,6 +34,7 @@
 
 <script>
 	import Axios from 'nextcloud-axios';
+	import confirmPassword from 'nextcloud-password-confirmation';
 
 	import AuthTokenList from './AuthTokenList';
 	import AuthTokenSetupDialogue from './AuthTokenSetupDialogue';
@@ -137,8 +138,8 @@
 			wipeToken(token) {
 				console.debug('wiping app token', token);
 
-				return Axios.post(this.baseUrl + '/wipe/' + token.id)
-					.then(resp => resp.data)
+				confirmPassword()
+					.then(() => Axios.post(this.baseUrl + '/wipe/' + token.id))
 					.then(tap(() => {
 						console.debug('app token marked for wipe')
 
