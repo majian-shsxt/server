@@ -31,11 +31,17 @@ module.exports = {
 			},
 			{
 				test: /\.handlebars$/,
-				loader: "handlebars-loader"
-			}
+				loader: "handlebars-loader",
+				options: {
+					helperDirs: path.join(__dirname, 'src/hbs_helpers'),
+					precompileOptions: {
+						knownHelpersOnly: false,
+					},
+				}
+			},
 		]
 	},
 	resolve: {
-		extensions: ['*', '.js']
+		extensions: ['*', '.js', '.handlebars']
 	}
 };
